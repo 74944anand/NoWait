@@ -5,6 +5,8 @@ const session = require("express-session");
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: "anand", resave: false, saveUninitialized: true }));
+//To store user data after login
+const dataStore = [];
 
 //Routes
 app.get("/home", (req, res) => {
@@ -34,6 +36,18 @@ app.get("/register", (req, res) => {
 app.get("/", (req, res) => {
   res.render("index.ejs");
 });
+app.get("/Cart", (req, res) => {
+  res.render("cart.ejs");
+});
+app.get("/Orders", (req, res) => {
+  res.render("order.ejs");
+});
+app.get("/Product", (req, res) => {
+  res.render("product.ejs");
+});
+app.get("/AboutUs", (req, res) => {
+  res.render("aboutUS.ejs");
+});
 //End Routes
 
 //login post api
@@ -55,8 +69,14 @@ app.post("/login", async (req, res) => {
 
       const user = rows[0];
       const passwordMatch = await bcrypt.compare(password, user.password);
-
       if (passwordMatch) {
+//send data to database of that user
+        // sql="insert into logdata (email) values(?);"
+        con.query(sql,email,(err,result)=>{
+          if(err){
+            console.log(err);
+          }
+        })
         return res.status(200).redirect("/home");
       } else {
         return res.status(401).send("Invalid username or password");
@@ -104,17 +124,50 @@ app.post("/register", async (req, resp) => {
 //end register api
 
 //Home Page api
+
+const result= app.get("/home", (req,res)=>{
+
+  const sql="Select * from product where products=?";
+  const data=req.body.search;
+  return con.query(sql,data, (err,result)=>{
+    if(err){
+      console.log(err);
+    }
+    else{
+      res.redirect("/product")
+      return result;
+      }
+    })
+})
+
 //end home page api
 
 //Products api
+app.post("/product", (req,res,result)=>{
+
+  // const sql="insert into cart ()";
+  const {email, product_id, quantity}=req.body;
+  const sql="select * from product where products=?"
+  con.query(sql,result, (err,output)=>{
+    if(err){
+      console.log(err);
+    }
+    else{
+      res.redirect("/cart")
+      res.send(output)
+      }
+    })
+})
+
 //end product api
 
 //Order page api
 //end order page api
 
 //Cart api
+app.get("/Cart", async (req, res) => {
+  res.render("/cart");
+});
 //end cart api
-
-
 
 app.listen(3000);
